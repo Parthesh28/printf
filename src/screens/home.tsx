@@ -18,7 +18,7 @@ import {
   IconButton,
   Divider,
 } from 'react-native-paper';
-import { useAuth } from '../context/authContext'; 
+import { useAuth } from '../context/authContext';
 
 // Types
 interface PrintJob {
@@ -113,7 +113,7 @@ const Home: React.FC<HomeScreenProps> = ({ navigation }) => {
   };
 
   const handlePrintJobPress = (printJob: PrintJob) => {
-    navigation.navigate('Details', {printData : printJob});
+    navigation.navigate('Details', { printData: printJob });
   };
 
   // Utility functions
@@ -229,6 +229,123 @@ const Home: React.FC<HomeScreenProps> = ({ navigation }) => {
       .substring(0, 2);
   };
 
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
+    },
+    searchSection: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 16,
+      paddingBottom: 8,
+      gap: 12,
+    },
+    searchbar: {
+      flex: 1,
+    },
+    profileSection: {
+      justifyContent: 'center',
+    },
+    avatar: {
+      backgroundColor: '#6750A4',
+    },
+    filtersContainer: {
+      flexDirection: 'row',
+      paddingHorizontal: 16,
+      paddingBottom: 16,
+      gap: 8,
+    },
+    chip: {
+      marginRight: 4,
+    },
+    listContainer: {
+      padding: 16,
+      paddingTop: 0,
+      paddingBottom: 100,
+    },
+    card: {
+      marginBottom: 16,
+    },
+    cardContent: {
+      paddingVertical: 16,
+    },
+    cardHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      marginBottom: 16,
+    },
+    cardTitleSection: {
+      flex: 1,
+      marginRight: 16,
+    },
+    printName: {
+      fontWeight: '600',
+      marginBottom: 4,
+    },
+    printDescription: {
+      opacity: 0.7,
+      lineHeight: 18,
+    },
+    statusSection: {
+      alignItems: 'center',
+    },
+    statusIndicator: {
+      borderRadius: 20,
+      width: 32,
+      height: 32,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    statusIcon: {
+      margin: 0,
+    },
+    divider: {
+      marginVertical: 8,
+    },
+    cardFooter: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-end',
+      paddingTop: 8,
+    },
+    amountSection: {
+      flex: 1,
+    },
+    amountLabel: {
+      opacity: 0.6,
+      marginBottom: 2,
+    },
+    printAmount: {
+      fontWeight: '600',
+      fontSize: 16,
+    },
+    dateSection: {
+      flex: 1,
+      alignItems: 'flex-end',
+    },
+    dateLabel: {
+      opacity: 0.6,
+    },
+    fab: {
+      position: 'absolute',
+      margin: 20,
+      right: 0,
+      bottom: 20,
+    },
+    emptyContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingTop: 60,
+    },
+    emptyText: {
+      opacity: 0.6,
+    },
+  });
+
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
@@ -236,7 +353,7 @@ const Home: React.FC<HomeScreenProps> = ({ navigation }) => {
       {/* Search Bar with Profile */}
       <View style={[styles.searchSection, { paddingTop: insets.top + 16 }]}>
         <Searchbar
-          placeholder="Search for prints"
+          placeholder={"Search for prints"}
           onChangeText={handleSearch}
           value={searchQuery}
           style={styles.searchbar}
@@ -252,7 +369,8 @@ const Home: React.FC<HomeScreenProps> = ({ navigation }) => {
             <Avatar.Text
               size={40}
               label={getUserInitials()}
-              style={styles.avatar}
+                style={styles.avatar}
+  
             />
           )}
         </View>
@@ -262,7 +380,10 @@ const Home: React.FC<HomeScreenProps> = ({ navigation }) => {
       <View style={styles.filtersContainer}>
         <Chip
           selected={selectedFilter === 'all'}
-          onPress={() => handleFilterPress('all')}
+          onPress={() => {
+            handleFilterPress('all')
+            console.log(user?.idToken)
+          }}
           style={styles.chip}
         >
           All
@@ -316,119 +437,5 @@ const Home: React.FC<HomeScreenProps> = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  searchSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingBottom: 8,
-    gap: 12,
-  },
-  searchbar: {
-    flex: 1,
-  },
-  profileSection: {
-    justifyContent: 'center',
-  },
-  avatar: {
-    backgroundColor: '#6750A4',
-  },
-  filtersContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-    gap: 8,
-  },
-  chip: {
-    marginRight: 4,
-  },
-  listContainer: {
-    padding: 16,
-    paddingTop: 0,
-    paddingBottom: 100,
-  },
-  card: {
-    marginBottom: 16,
-  },
-  cardContent: {
-    paddingVertical: 16,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 16,
-  },
-  cardTitleSection: {
-    flex: 1,
-    marginRight: 16,
-  },
-  printName: {
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  printDescription: {
-    opacity: 0.7,
-    lineHeight: 18,
-  },
-  statusSection: {
-    alignItems: 'center',
-  },
-  statusIndicator: {
-    borderRadius: 20,
-    width: 32,
-    height: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  statusIcon: {
-    margin: 0,
-  },
-  divider: {
-    marginVertical: 8,
-  },
-  cardFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-    paddingTop: 8,
-  },
-  amountSection: {
-    flex: 1,
-  },
-  amountLabel: {
-    opacity: 0.6,
-    marginBottom: 2,
-  },
-  printAmount: {
-    fontWeight: '600',
-    fontSize: 16,
-  },  
-  dateSection: {
-    flex: 1,
-    alignItems: 'flex-end',
-  },
-  dateLabel: {
-    opacity: 0.6,
-  },
-  fab: {
-    position: 'absolute',
-    margin: 20,
-    right: 0,
-    bottom: 20,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingTop: 60,
-  },
-  emptyText: {
-    opacity: 0.6,
-  },
-});
 
 export default Home;

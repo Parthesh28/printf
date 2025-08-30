@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import { GoogleSignin,  } from '@react-native-google-signin/google-signin';
+import * as Keychain from 'react-native-keychain';
 
 // Type definitions
 interface GoogleUser {
@@ -24,6 +25,9 @@ interface AuthContextType {
     isLoading: boolean;
     error: string | null;
     signIn: () => Promise<GoogleUser | null>;
+    saveIdToken: (idToken : string) => Promise<void>;
+    loadIdToken: () => Promise<string | null>;
+    clearIdToken: () => Promise<void>;
     signOut: () => Promise<void>;
     clearError: () => void;
 }
@@ -42,20 +46,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setError(null);
     }, []);
 
+
+ const saveIdToken = async (idToken: string) => {
+        try {
+           await Keychain.setGenericPassword('googleUser', idToken, {
+                accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED,
+                service: 'com.myapp.idToken', // unique service name
+            });
+        } catch (err) {
+            console.error('Failed to save idToken:', err);
+        }
+    };
+
+ const loadIdToken = async (): Promise<string | null> => {
+        try {
+            const creds = await Keychain.getGenericPassword({
+                service: 'com.myapp.idToken',
+            });
+            return creds ? creds.password : null;
+        } catch (err) {
+            console.error('Failed to load idToken:', err);
+            return null;
+        }
+    };
+
+    const clearIdToken = async () => {
+        await Keychain.resetGenericPassword({ service: 'com.myapp.idToken' });
+    };
+
     // Check for existing signed-in user on app start
     useEffect(() => {
-        const checkSignedInUser = () => {
+        const checkSignedInUser = async () => {
             try {
                 setError(null);
                 const hasPreviousSignIn = GoogleSignin.hasPreviousSignIn();
 
                 if (hasPreviousSignIn) {
-                    const currentUser = GoogleSignin.getCurrentUser();
-                    if (currentUser) {
-                        setUser(currentUser);
+                    const userInfo = await GoogleSignin.signInSilently();
+
+                    if (userInfo) {
+                        setUser(userInfo.data);
                         setIsLoggedIn(true);
                     }
+
+                    if (userInfo.data?.idToken) {
+                        await saveIdToken(userInfo.data?.idToken);
+                    }
                 }
+
             } catch (err) {
                 const errorMessage = err instanceof Error ? err.message : 'Failed to check signed-in user';
                 setError(errorMessage);
@@ -75,7 +113,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setIsLoading(true);
             await GoogleSignin.hasPlayServices();
             const userInfo = await GoogleSignin.signIn();
-            console.log(userInfo);
 
             // Validate response structure
             if (!userInfo?.data?.user) {
@@ -84,6 +121,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             setUser(userInfo.data);
             setIsLoggedIn(true);
+
+            if (userInfo.data.idToken) {
+                await saveIdToken(userInfo.data.idToken);
+            }
 
             return userInfo.data.user;
         } catch (err) {
@@ -125,6 +166,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isLoggedIn,
         isLoading,
         error,
+        saveIdToken,
+        loadIdToken,
+        clearIdToken,
         signIn,
         signOut,
         clearError,

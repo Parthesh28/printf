@@ -1,0 +1,39 @@
+import { DocumentPickerResponseOpenLongTerm } from "@react-native-documents/picker";
+import { useMutation } from "@tanstack/react-query";
+import axios from "axios";
+
+
+const useFileUpload = () => {
+    return useMutation({
+        mutationFn: async ({ file, authToken }: { file: DocumentPickerResponseOpenLongTerm, authToken:  string | null | undefined}) => {
+            const formData = new FormData();
+
+            formData.append('file', {
+                uri: decodeURI(file.uri),
+                type: file.type,
+                name: file.name
+            });
+            const headers = {
+                'Content-Type': 'multipart/form-data',
+                'xxx-auth-token': authToken!,
+            }
+            const response = await fetch('https://archlinux.234892.xyz/files/upload', {
+                method: 'POST',
+                headers,
+                body: formData,
+            });
+
+            console.log(await response.json());
+
+            if (!(response.status == 200)) {
+                throw new Error('Upload failed');
+            }
+
+            return response.json();
+        },
+    });
+}
+    
+export {
+    useFileUpload
+}

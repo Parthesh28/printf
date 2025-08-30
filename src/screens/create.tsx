@@ -17,7 +17,25 @@ import {
     Card,
     Divider,
 } from 'react-native-paper';
-import { pick, VirtualFileMeta,  } from '@react-native-documents/picker';
+import { keepLocalCopy, pick, VirtualFileMeta, } from '@react-native-documents/picker';
+import RazorpayCheckout from 'react-native-razorpay';
+import { useFileUpload } from '../hooks/useQueries';
+import { useAuth } from '../context/authContext';
+import axios from 'axios';
+
+interface PrintJob {
+    name: string;
+    description: string;
+    amount: number;
+    status: string;
+    createdAt: Date;
+    id: string;
+    isLandscape: boolean;
+    isColor: boolean;
+    copies: number;
+    paperFormat: string;
+    file: string[];
+}
 
 interface Filetype {
     uri: string;
@@ -32,6 +50,7 @@ interface Filetype {
 }
 
 const Create = ({ navigation }: any) => {
+    const { user } = useAuth()
     const theme = useTheme();
     const [formData, setFormData] = useState({
         printName: '',
@@ -43,6 +62,32 @@ const Create = ({ navigation }: any) => {
         pagesPerSheet: '1',
     });
     const [selectedFile, setSelectedFile] = useState<Filetype | null>(null);
+    const [printJob, setPrintJob] = useState<PrintJob | null>(null);
+
+    // Calculate print job amount based on preferences
+    const calculateAmount = () => {
+        let basePrice = 5; // Base price per page
+        if (formData.format === 'color') basePrice *= 2;
+        if (formData.paper === 'A3') basePrice *= 1.5;
+        return basePrice * parseInt(formData.copies || '1');
+    };
+
+    // Create print job object from current preferences
+    const createPrintJob = (): PrintJob => {
+        return {
+            id: Date.now().toString(),
+            name: formData.printName || 'Untitled Print',
+            description: `${formData.format.toUpperCase()} print on ${formData.paper} paper`,
+            amount: calculateAmount(),
+            status: 'pending',
+            createdAt: new Date(),
+            isLandscape: formData.orientation === 'landscape',
+            isColor: formData.format === 'color',
+            copies: parseInt(formData.copies || '1'),
+            paperFormat: formData.paper,
+            file: selectedFile ? [selectedFile.uri] : [],
+        };
+    };
 
     const orientationOptions = [
         { value: 'landscape', label: 'Landscape', icon: 'phone-rotate-landscape' },
@@ -59,25 +104,42 @@ const Create = ({ navigation }: any) => {
         { value: 'A4', label: 'A4' },
     ];
 
-    const handleInputChange = (field, value) => {
+    const handleInputChange = (field: string, value: string) => {
         setFormData(prev => ({
             ...prev,
             [field]: value,
         }));
+
+        setTimeout(() => {
+            setPrintJob(createPrintJob());
+        }, 0);
     };
+    const uploadMutation = useFileUpload();
 
     const handleFileUpload = async () => {
         try {
-            // const [pickResult] = await pick()
-            const [pickResult] = await pick({ mode: 'import' }) // equivalent
-            // do something with the picked file
-            setSelectedFile(pickResult)
-        } catch (err: unknown) {
-            // see error handling
-        }
-    }
+            const [pickResult] = await pick({
+                mode: 'open',
+                requestLongTermAccess: true,
+            });
 
-    const handleSubmit = () => {
+            setSelectedFile(pickResult);
+
+            const values = {
+                file: pickResult,
+                authToken: user?.idToken
+            }
+
+            const response = await uploadMutation.mutateAsync(values);
+
+            console.log(response);
+        } catch (err) {
+            console.error('File selection error:', err);
+            Alert.alert('Error', 'Failed to select file.');
+        }
+    };
+
+    const handleProceed = () => {
         // Validate required fields
         if (!formData.printName.trim()) {
             Alert.alert('Error', 'Please enter a print name');
@@ -94,11 +156,15 @@ const Create = ({ navigation }: any) => {
             return;
         }
 
-        // Process the print
-        Alert.alert('Success', 'Print created successfully!');
+        // Create final print job
+        const finalPrintJob = createPrintJob();
+        setPrintJob(finalPrintJob);
+
+        // You can now pass the printJob to navigation or store it globally
+        navigation.navigate("Summary", { finalPrintJob });
     };
 
-    const getFileIcon = (type) => {
+    const getFileIcon = (type: string | null) => {
         if (type?.includes('pdf')) return 'file-pdf-box';
         if (type?.includes('image')) return 'file-image';
         return 'file-document';
@@ -421,13 +487,8 @@ const Create = ({ navigation }: any) => {
             {/* Fixed Submit Button */}
             <Surface style={styles.submitContainer} elevation={4}>
                 <Button
-                    mode="contained"
-                    onPress={handleSubmit}
-                    style={styles.submitButton}
-                    contentStyle={styles.submitButtonContent}
-                    icon="printer"
-                >
-                    Create Print
+                    onPress={handleProceed}>
+                    Proceed to payment
                 </Button>
             </Surface>
         </View>

@@ -332,8 +332,8 @@ const Create = ({ navigation }: any) => {
                         <View style={styles.cardContent}>
                             {/* Print Name */}
                             <View style={styles.fieldContainer}>
-                                <Text style={styles.label}>Name</Text>
                                 <TextInput
+                                    label='Name'
                                     value={formData.printName}
                                     onChangeText={(text) => handleInputChange('printName', text)}
                                     mode="outlined"
@@ -487,6 +487,8 @@ const Create = ({ navigation }: any) => {
             {/* Fixed Submit Button */}
             <Surface style={styles.submitContainer} elevation={4}>
                 <Button
+                    mode='contained'
+                    icon='cash'
                     onPress={handleProceed}>
                     Proceed to payment
                 </Button>

@@ -5,6 +5,7 @@ import {
   StyleSheet,
   RefreshControl,
   StatusBar,
+  TouchableOpacity,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -114,6 +115,10 @@ const Home: React.FC<HomeScreenProps> = ({ navigation }) => {
 
   const handlePrintJobPress = (printJob: PrintJob) => {
     navigation.navigate('Details', { printData: printJob });
+  };
+
+  const handleProfilePress = () => {
+    navigation.navigate('Settings');
   };
 
   // Utility functions
@@ -252,8 +257,9 @@ const Home: React.FC<HomeScreenProps> = ({ navigation }) => {
     },
     filtersContainer: {
       flexDirection: 'row',
-      paddingHorizontal: 16,
-      paddingBottom: 16,
+      paddingHorizontal: 20,
+      paddingBottom: 10,
+      paddingTop: 10,
       gap: 8,
     },
     chip: {
@@ -358,7 +364,7 @@ const Home: React.FC<HomeScreenProps> = ({ navigation }) => {
           value={searchQuery}
           style={styles.searchbar}
         />
-        <View style={styles.profileSection}>
+        <TouchableOpacity style={styles.profileSection} onPress={handleProfilePress}>
           {user?.user?.photo ? (
             <Avatar.Image
               size={40}
@@ -369,11 +375,11 @@ const Home: React.FC<HomeScreenProps> = ({ navigation }) => {
             <Avatar.Text
               size={40}
               label={getUserInitials()}
-                style={styles.avatar}
-  
+              style={styles.avatar}
+
             />
           )}
-        </View>
+        </TouchableOpacity>
       </View>
 
       {/* Filter Chips */}

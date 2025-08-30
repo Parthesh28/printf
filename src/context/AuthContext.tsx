@@ -144,8 +144,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setIsLoading(true);
 
             await GoogleSignin.signOut();
-
-            // Clear all user-related state
             setUser(null);
             setIsLoggedIn(false);
         } catch (err) {

@@ -1,6 +1,5 @@
 import { DocumentPickerResponseOpenLongTerm } from "@react-native-documents/picker";
 import { useMutation } from "@tanstack/react-query";
-import axios from "axios";
 
 
 const useFileUpload = () => {

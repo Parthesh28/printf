@@ -7,8 +7,8 @@ import {
     MD3LightTheme,
     Button,
     ActivityIndicator,
+    IconButton,
 } from 'react-native-paper';
-import MaterialDesignIcons from '@react-native-vector-icons/material-design-icons';
 import { useAuth } from '../context/authContext';
 
 const theme = {
@@ -33,10 +33,10 @@ const Login = () => {
             <View style={styles.container}>
                 <Surface style={styles.surface} elevation={4}>
                     <View style={styles.logoWrapper}>
-                        <MaterialDesignIcons
-                            name="printer"
+                        <IconButton
+                            icon="printer"
                             size={64}
-                            color={theme.colors.primary}
+                            iconColor={theme.colors.primary}
                         />
                     </View>
 

@@ -10,6 +10,7 @@ import {
   Divider,
 } from 'react-native-paper';
 import { useAuth } from '../context/authContext';
+import { SettingsStyles as styles } from '../styles/settingsStyles';
 
 const SettingsScreen = ({ navigation }) => {
   const [pushNotifications, setPushNotifications] = useState(false);
@@ -17,12 +18,7 @@ const SettingsScreen = ({ navigation }) => {
   const theme = useTheme();
   const { signOut, clearIdToken} = useAuth();
 
-  // Mock user data
-  const user = {
-    name: 'Sarah Chen',
-    email: 'sarah.chen@company.com',
-    avatar: 'https://images.unsplash.com/photo-1494790108755-2616b332c1ef?w=150&h=150&fit=crop&crop=face'
-  };
+  const { user } = useAuth();
 
   const handleGoBack = () => {
     // Navigate back to home or previous screen
@@ -65,14 +61,14 @@ const SettingsScreen = ({ navigation }) => {
           <View style={styles.profileHeader}>
             <Avatar.Image
               size={72}
-              source={{ uri: user.avatar }}
+              source={ {uri : user?.user.photo}}
             />
             <View style={styles.profileInfo}>
               <Text variant="headlineSmall" style={[styles.profileName, { color: theme.colors.onSurface }]}>
-                {user.name}
+                {user?.user.name}
               </Text>
               <Text variant="bodyMedium" style={[styles.profileEmail, { color: theme.colors.onSurfaceVariant }]}>
-                {user.email}
+                {user?.user.email}
               </Text>
             </View>
           </View>
@@ -182,119 +178,5 @@ const SettingsScreen = ({ navigation }) => {
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  headerTitle: {
-    fontWeight: '600',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  content: {
-    paddingHorizontal: 24,
-    paddingBottom: 40,
-  },
-
-  // Profile Section
-  profileSection: {
-    paddingVertical: 24,
-  },
-  profileHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  profileInfo: {
-    marginLeft: 20,
-    flex: 1,
-  },
-  profileName: {
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  profileEmail: {
-    opacity: 0.8,
-  },
-  signOutRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 4,
-    gap: 12,
-  },
-  signOutText: {
-    flex: 1,
-    fontWeight: '500',
-  },
-
-  // Dividers
-  mainDivider: {
-    height: 1,
-    opacity: 0.5,
-  },
-  sectionDivider: {
-    height: 1,
-    opacity: 0.3,
-    marginVertical: 8,
-  },
-
-  // Sections
-  section: {
-    paddingVertical: 24,
-  },
-  sectionTitle: {
-    fontWeight: '600',
-    marginBottom: 20,
-    paddingHorizontal: 4,
-  },
-
-  // Setting Groups
-  settingGroup: {
-    marginBottom: 8,
-  },
-  settingTitle: {
-    fontWeight: '500',
-    marginBottom: 4,
-  },
-  settingSubtitle: {
-    opacity: 0.8,
-    marginBottom: 20,
-  },
-
-  // Theme Options
-  themeGrid: {
-    flexDirection: 'row',
-    gap: 16,
-  },
-  themeOption: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 20,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    borderWidth: 2,
-    minHeight: 100,
-  },
-  themeLabel: {
-    marginTop: 8,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-
-  // Settings Row
-  settingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 4,
-  },
-  settingInfo: {
-    flex: 1,
-    marginRight: 16,
-  },
-});
 
 export default SettingsScreen;

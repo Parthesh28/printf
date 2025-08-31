@@ -2,7 +2,6 @@ import React, { createContext, useState, useEffect, useContext, useCallback } fr
 import { GoogleSignin,  } from '@react-native-google-signin/google-signin';
 import * as Keychain from 'react-native-keychain';
 
-// Type definitions
 interface GoogleUser {
     id: string;
     name: string | null;
@@ -32,7 +31,6 @@ interface AuthContextType {
     clearError: () => void;
 }
 
-// Context with proper error handling for usage outside provider
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -41,7 +39,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Clear error function
     const clearError = useCallback(() => {
         setError(null);
     }, []);
@@ -51,7 +48,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         try {
            await Keychain.setGenericPassword('googleUser', idToken, {
                 accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED,
-                service: 'com.myapp.idToken', // unique service name
+                service: 'com.myapp.idToken', 
             });
         } catch (err) {
             console.error('Failed to save idToken:', err);
@@ -74,7 +71,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await Keychain.resetGenericPassword({ service: 'com.myapp.idToken' });
     };
 
-    // Check for existing signed-in user on app start
     useEffect(() => {
         const checkSignedInUser = async () => {
             try {
@@ -106,7 +102,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         checkSignedInUser();
     }, []);
 
-    // Sign in function with proper error handling and type safety
     const signIn = useCallback(async (): Promise<GoogleUser | null> => {
         try {
             setError(null);
@@ -114,7 +109,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             await GoogleSignin.hasPlayServices();
             const userInfo = await GoogleSignin.signIn();
 
-            // Validate response structure
             if (!userInfo?.data?.user) {
                 throw new Error('Invalid sign-in response from Google');
             }
@@ -137,7 +131,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     }, []);
 
-    // Sign out function with proper cleanup
     const signOut = useCallback(async (): Promise<void> => {
         try {
             setError(null);
@@ -151,7 +144,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setError(errorMessage);
             console.error('Google Sign-Out error:', err);
 
-            // Even if sign-out fails, clear local state
             setUser(null);
             setIsLoggedIn(false);
         } finally {
@@ -179,14 +171,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
 };
 
-// Custom hook with proper error handling for usage outside provider
 export const useAuth = (): AuthContextType => {
     const context = useContext(AuthContext);
 
     if (context === null) {
         throw new Error(
             'useAuth must be used within an AuthProvider. ' +
-            'Make sure your component is wrapped with <AuthProvider>.'
+            'Make sure your component is wrapped with AuthProvider.'
         );
     }
 

@@ -1,5 +1,5 @@
 import { StyleSheet } from "react-native";
-import { MD3Theme } from "react-native-paper";
+import { MD3Theme} from "react-native-paper";
 
 export const createHomeStyles = (theme: MD3Theme) =>
   StyleSheet.create({
@@ -11,17 +11,19 @@ export const createHomeStyles = (theme: MD3Theme) =>
       backgroundColor: theme.colors.background,
       elevation: 0,
     },
-    headerContentContainer: {
-      position: 'relative',
+    headerContentContainer: { 
+      flex: 1,
       width: '100%',
-      paddingHorizontal:8,
-      justifyContent: 'center', // This ensures its children are centered vertically if they don't fill
+      position: 'relative',
+      justifyContent: 'flex-end', // Aligns content to bottom of appbar
+      paddingHorizontal: 8,
     },
     defaultHeaderItems: {
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
       width: "100%",
+      height: 50,
     },
     logo: {
       fontSize: 24,
@@ -29,33 +31,46 @@ export const createHomeStyles = (theme: MD3Theme) =>
       color: theme.colors.onBackground,
       marginLeft: 6,
     },
-    searchbarContainer: {
+    // Wrapper for the searchbar to position it correctly
+    searchbarWrapper: {
       position: "absolute",
-      width: '100%', // Take full width
-      alignSelf: 'center', // Center itself within headerContentContainer
-      alignItems: 'center', // Center its children (the Searchbar)
-      paddingHorizontal: 10, // Apply padding here to control overall horizontal spacing
+      top: 0,
+      right: 8, // Aligns start of animation to the right
+      bottom: 0,
+      justifyContent: "center",
+      alignItems: "center",
     },
     searchbar: {
-      height: 56,
+      width: '100%',
+      height: 50,
       elevation: 3,
       shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
+      shadowOffset: { width: 0, height: 1 },
       shadowOpacity: 0.1,
-      shadowRadius: 4,
+      shadowRadius: 2,
     },
     filtersContainer: {
-      flexDirection: "row",
-      paddingBottom: 10,
-      paddingTop: 10,
-      paddingLeft: 1,
+      paddingVertical: 12,
+    },
+    filtersContentContainer: {
+      paddingHorizontal: 16,
+      gap: 8,
     },
     chip: {
-      marginRight: 1,
+      backgroundColor: theme.colors.surfaceVariant,
+      borderRadius: 20,
+    },
+    selectedChip: {
+      backgroundColor: theme.colors.primary,
+    },
+    chipText: {
+      color: theme.colors.onSurfaceVariant,
+    },
+    selectedChipText: {
+      color: theme.colors.onPrimary,
     },
     listContainer: {
-      padding: 16,
-      paddingTop: 0,
+      paddingHorizontal: 16,
       paddingBottom: 100,
     },
     fab: {

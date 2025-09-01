@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { View, ScrollView, Alert, TouchableOpacity, LayoutAnimation, Platform, UIManager } from "react-native";
+import React, { useState, useEffect, useRef } from "react";
+import { View, ScrollView, Alert, TouchableOpacity, Animated, Easing, LayoutChangeEvent } from "react-native";
 import {
     Text,
     TextInput,
@@ -11,20 +11,133 @@ import {
     Appbar,
     List,
     Divider,
-    FAB,
+    Icon,
 } from "react-native-paper";
 import { pick } from "@react-native-documents/picker";
 import { useAuth } from "../context/authContext";
 import { createNewStyles } from "../styles/createStyles";
 
-interface Filetype {
-    uri: string;
-    name: string | null;
-    type: string | null;
+interface SmoothAccordionProps {
+    title: string;
+    icon: string;
+    children: React.ReactNode;
+    isExpanded: boolean;
+    onPress: () => void;
 }
 
+const SmoothAccordion: React.FC<SmoothAccordionProps> = ({ title, icon, children, isExpanded, onPress }) => {
+    const theme = useTheme();
+    const styles = createNewStyles(theme);
+    const [contentHeight, setContentHeight] = useState(0);
+    const animation = useRef(new Animated.Value(isExpanded ? 1 : 0)).current;
+
+    useEffect(() => {
+        Animated.timing(animation, {
+            toValue: isExpanded ? 1 : 0,
+            duration: 320,
+            easing: Easing.out(Easing.ease),
+            useNativeDriver: false,
+        }).start();
+    }, [isExpanded]);
+
+    const animatedHeight = contentHeight > 0 ? animation.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0, contentHeight],
+    }) : 0;
+
+    const animatedOpacity = animation.interpolate({
+        inputRange: [0, 0.5, 1],
+        outputRange: [0, 0, 1],
+    });
+
+    const chevronRotation = animation.interpolate({
+        inputRange: [0, 1],
+        outputRange: ['0deg', '90deg'],
+    });
+
+    const chevronStyle = {
+        transform: [{ rotate: chevronRotation }],
+    };
+
+    const contentContainerStyle = {
+        height: animatedHeight,
+        opacity: animatedOpacity,
+        overflow: 'hidden' as const,
+    };
+
+    const handleLayout = (event: LayoutChangeEvent) => {
+        const measuredHeight = event.nativeEvent.layout.height;
+        if (measuredHeight > 0 && contentHeight !== measuredHeight) {
+            setContentHeight(measuredHeight);
+        }
+    };
+
+    return (
+        <View>
+            <TouchableOpacity onPress={onPress} style={styles.accordionHeader}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Icon source={icon} size={22} color={theme.colors.onSurfaceVariant} />
+                    <Text style={styles.accordionTitle}>{title}</Text>
+                </View>
+                <Animated.View style={chevronStyle}>
+                    <List.Icon icon="chevron-right" />
+                </Animated.View>
+            </TouchableOpacity>
+
+            <Animated.View style={contentContainerStyle}>
+                <View
+                    onLayout={handleLayout}
+                    style={styles.accordionContent}
+                >
+                    {children}
+                </View>
+            </Animated.View>
+        </View>
+    );
+};
+
+interface StepperInputProps {
+    value: string;
+    onValueChange: (newValue: string) => void;
+    minValue?: number;
+}
+
+const StepperInput: React.FC<StepperInputProps> = ({ value, onValueChange, minValue = 1 }) => {
+    const theme = useTheme();
+    const styles = createNewStyles(theme);
+    const numericValue = parseInt(value, 10) || minValue;
+
+    const handleIncrement = () => {
+        onValueChange(String(numericValue + 1));
+    };
+
+    const handleDecrement = () => {
+        if (numericValue > minValue) {
+            onValueChange(String(numericValue - 1));
+        }
+    };
+
+    return (
+        <View style={styles.stepperContainer}>
+            <IconButton
+                icon="minus"
+                onPress={handleDecrement}
+                disabled={numericValue <= minValue}
+                style={styles.stepperButton}
+                size={20}
+            />
+            <Text style={styles.stepperValue}>{value}</Text>
+            <IconButton
+                icon="plus"
+                onPress={handleIncrement}
+                style={styles.stepperButton}
+                size={20}
+            />
+        </View>
+    );
+};
+
 const Create = ({ navigation }: any) => {
-    const { user } = useAuth();
     const theme = useTheme();
     const styles = createNewStyles(theme);
 
@@ -37,13 +150,12 @@ const Create = ({ navigation }: any) => {
         pageRange: "",
         pagesPerSheet: "1",
     });
-    const [selectedFile, setSelectedFile] = useState<Filetype | null>(null);
+    const [selectedFile, setSelectedFile] = useState<any | null>(null);
+    const [expandedId, setExpandedId] = useState<string | undefined>('layout');
 
-    useEffect(() => {
-        if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-            UIManager.setLayoutAnimationEnabledExperimental(true);
-        }
-    }, []);
+    const handleAccordionPress = (id: string) => {
+        setExpandedId(currentId => (currentId === id ? undefined : id));
+    };
 
     const handleInputChange = (field: keyof typeof formData, value: string) => {
         setFormData(prev => ({ ...prev, [field]: value }));
@@ -65,129 +177,93 @@ const Create = ({ navigation }: any) => {
         navigation.navigate("Summary", { finalPrintJob: { ...formData, file: selectedFile } });
     };
 
-    const getFileIcon = (type: string | null) => {
+    const getFileicon = (type: string | null) => {
         if (type?.includes("pdf")) return "file-pdf-box";
         if (type?.includes("image")) return "file-image";
-        return "file-document";
+        return "file-document-outline";
     };
-
-    const handleAccordionPress = () => {
-        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    }
 
     return (
         <View style={styles.container}>
-            <Appbar.Header style={styles.header} mode="center-aligned">
+            <Appbar.Header style={styles.header} mode="center-aligned" elevated>
                 <Appbar.BackAction onPress={() => navigation.goBack()} />
                 <Appbar.Content title="Create Print Job" />
             </Appbar.Header>
 
             <ScrollView contentContainerStyle={styles.content}>
-                <Surface style={styles.documentHub} elevation={2}>
+                <View style={styles.sectionContainer}>
+                    <View style={styles.sectionHeaderContainer}>
+                        <Icon source="file-document-outline" size={22} color={theme.colors.onSurfaceVariant} />
+                        <Text style={styles.sectionHeaderText}>Document</Text>
+                    </View>
                     {selectedFile ? (
-                        <TouchableOpacity style={styles.selectedFileCard} onPress={handleFileUpload}>
-                            <IconButton icon={getFileIcon(selectedFile.type)} size={48} iconColor={theme.colors.primary} />
-                            <View style={styles.fileInfo}>
-                                <Text style={styles.fileName} numberOfLines={1}>{selectedFile.name}</Text>
-                                <Text style={styles.fileDetails}>Tap to change file</Text>
-                            </View>
+                        <TouchableOpacity onPress={handleFileUpload}>
+                            <Surface style={styles.selectedFileContainer} elevation={0}>
+                                <IconButton icon={getFileicon(selectedFile.type)} size={36} iconColor={theme.colors.primary} style={styles.fileIcon} />
+                                <View style={styles.fileInfo}>
+                                    <Text style={styles.fileName} numberOfLines={1}>{selectedFile.name}</Text>
+                                    <Text style={styles.fileDetails}>Tap to change the file</Text>
+                                </View>
+                                <List.Icon icon="chevron-right" />
+                            </Surface>
                         </TouchableOpacity>
                     ) : (
-                        <>
-                            <IconButton icon="file-upload-outline" size={48} iconColor={theme.colors.primary} />
+                        <TouchableOpacity style={styles.fileSelectorContainer} onPress={handleFileUpload}>
+                            <IconButton icon="file-upload-outline" size={40} iconColor={theme.colors.primary} />
                             <Text style={styles.hubText}>Select a Document</Text>
-                            <Text style={styles.hubSubtext}>PDF, JPG, PNG accepted</Text>
-                            <Button mode="contained" onPress={handleFileUpload}>Browse Files</Button>
-                        </>
+                        </TouchableOpacity>
                     )}
-                </Surface>
+                    {selectedFile && (
+                        <TextInput
+                            label="Print Name"
+                            value={formData.printName}
+                            onChangeText={(val) => handleInputChange("printName", val)}
+                            mode="outlined"
+                            style={styles.textInput}
+                            left={<TextInput.Icon icon="pencil-outline" />}
+                        />
+                    )}
+                </View>
 
-                <TextInput
-                    label="Print Name"
-                    value={formData.printName}
-                    onChangeText={(val) => handleInputChange("printName", val)}
-                    mode="outlined"
-                    style={[styles.input, { marginBottom: 24 }]}
-                />
+                <Divider style={styles.separator} horizontalInset />
 
-                <List.AccordionGroup>
-                    <List.Accordion
+                <View style={styles.sectionContainer}>
+                    <SmoothAccordion
                         title="Layout & Quality"
-                        id="1"
-                        style={styles.accordion}
-                        titleStyle={styles.accordionTitle}
-                        left={props => <List.Icon {...props} icon="layers-outline" />}
-                        onPress={handleAccordionPress}
+                        icon="layers-outline"
+                        isExpanded={expandedId === 'layout'}
+                        onPress={() => handleAccordionPress('layout')}
                     >
-                        <View style={styles.listItem}>
-                            <Text style={styles.listItemTitle}>Orientation</Text>
-                            <SegmentedButtons
-                                value={formData.orientation}
-                                onValueChange={(val) => handleInputChange('orientation', val)}
-                                buttons={[{ value: "Portrait", label: "Portrait" }, { value: "Landscape", label: "Landscape" }]}
-                                style={styles.inlineSegmentedButtons}
-                            />
-                        </View>
-                        <Divider style={styles.divider} />
-                        <View style={styles.listItem}>
-                            <Text style={styles.listItemTitle}>Paper Size</Text>
-                            <SegmentedButtons
-                                value={formData.paper}
-                                onValueChange={(val) => handleInputChange('paper', val)}
-                                buttons={[{ value: "A4", label: "A4" }, { value: "A3", label: "A3" }]}
-                                style={styles.inlineSegmentedButtons}
-                            />
-                        </View>
-                        <Divider style={styles.divider} />
-                        <View style={styles.listItem}>
-                            <Text style={styles.listItemTitle}>Color Mode</Text>
-                            <SegmentedButtons
-                                value={formData.format}
-                                onValueChange={(val) => handleInputChange('format', val)}
-                                buttons={[{ value: "B/W", label: "B/W" }, { value: "Color", label: "Color" }]}
-                                style={styles.inlineSegmentedButtons}
-                            />
-                        </View>
-                    </List.Accordion>
-                    <Divider style={styles.divider} />
-                    <List.Accordion
-                        title="Pages & Copies"
-                        id="2"
-                        style={styles.accordion}
-                        titleStyle={styles.accordionTitle}
-                        left={props => <List.Icon {...props} icon="file-multiple-outline" />}
-                        onPress={handleAccordionPress}
+                        <List.Item title="Orientation" right={() => <SegmentedButtons value={formData.orientation} onValueChange={(val) => handleInputChange('orientation', val)} buttons={[{ value: "Portrait", label: "Portrait" }, { value: "Landscape", label: "Landscape" }]} style={styles.inlineSegmentedButtons} />} />
+                        <Divider />
+                        <List.Item title="Paper Size" right={() => <SegmentedButtons value={formData.paper} onValueChange={(val) => handleInputChange('paper', val)} buttons={[{ value: "A4", label: "A4" }, { value: "A3", label: "A3" }]} style={styles.inlineSegmentedButtons} />} />
+                        <Divider />
+                        <List.Item title="Color" right={() => <SegmentedButtons value={formData.format} onValueChange={(val) => handleInputChange('format', val)} buttons={[{ value: "B/W", label: "B/W" }, { value: "Color", label: "Color" }]} style={styles.inlineSegmentedButtons} />} />
+                    </SmoothAccordion>
+                </View>
+
+                <Divider style={styles.separator} horizontalInset />
+                <View style={styles.sectionContainer}>
+                    <SmoothAccordion
+                        title="Paging & Copies"
+                        icon="file-multiple-outline"
+                        isExpanded={expandedId === 'paging'}
+                        onPress={() => handleAccordionPress('paging')}
                     >
-                        {/* --- UPDATED: Polished inputs, no dividers --- */}
-                        <List.Item
-                            title="Copies"
-                            titleStyle={styles.listItemTitle}
-                            style={styles.listItem}
-                            right={() => <TextInput mode="outlined" dense value={formData.copies} onChangeText={val => handleInputChange("copies", val.replace(/[^0-9]/g, ''))} style={styles.inlineInput} keyboardType="numeric" />}
-                        />
-                        <List.Item
-                            title="Pages per Sheet"
-                            titleStyle={styles.listItemTitle}
-                            style={styles.listItem}
-                            right={() => <TextInput mode="outlined" dense value={formData.pagesPerSheet} onChangeText={val => handleInputChange("pagesPerSheet", val.replace(/[^0-9]/g, ''))} style={styles.inlineInput} keyboardType="numeric" />}
-                        />
-                        <List.Item
-                            title="Page Range"
-                            titleStyle={styles.listItemTitle}
-                            style={styles.listItem}
-                            right={() => <TextInput mode="outlined" dense placeholder="e.g. 1-5, 8" value={formData.pageRange} onChangeText={val => handleInputChange("pageRange", val)} style={styles.inlineInputFull} />}
-                        />
-                    </List.Accordion>
-                </List.AccordionGroup>
+                        <List.Item title="Copies" right={() => <StepperInput value={formData.copies} onValueChange={val => handleInputChange("copies", val)} />} />
+                        <Divider />
+                        <List.Item title="Pages per Sheet" right={() => <StepperInput value={formData.pagesPerSheet} onValueChange={val => handleInputChange("pagesPerSheet", val)} />} />
+                        <Divider horizontalInset />
+                        <List.Item title="Page Range" description="e.g. 1-5, 8" right={() => <TextInput mode="outlined" dense placeholder="All" value={formData.pageRange} onChangeText={val => handleInputChange("pageRange", val)} style={styles.inlineInputFull} />} />
+                    </SmoothAccordion>
+                </View>
             </ScrollView>
 
-            <FAB
-                icon="arrow-right"
-                label="Proceed"
-                style={styles.fab}
-                visible={!!selectedFile && !!formData.printName}
-                onPress={handleProceed}
-            />
+            <Surface style={styles.bottomBar}>
+                <Button mode="contained" icon="arrow-right" onPress={handleProceed} disabled={!selectedFile || !formData.printName} style={styles.proceedButton} labelStyle={styles.proceedButtonLabel}>
+                    Proceed to Summary
+                </Button>
+            </Surface>
         </View>
     );
 };
